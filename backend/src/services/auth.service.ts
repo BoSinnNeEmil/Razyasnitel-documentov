@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import databaseService from './database.service';
+import memoryStorage from './memory-storage.service';
 
 interface AuthResult {
   user: {
@@ -20,7 +20,7 @@ class AuthService {
 
   async register(email: string, password: string, name?: string): Promise<AuthResult> {
     // Проверяем, существует ли пользователь
-    const existingUser = await databaseService.getUserByEmail(email);
+    const existingUser = await memoryStorage.getUserByEmail(email);
     if (existingUser) {
       throw new Error('Пользователь с таким email уже существует');
     }
@@ -35,10 +35,10 @@ class AuthService {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Создаем пользователя
-    const user = await databaseService.createUser(email, passwordHash, name);
+    const user = await memoryStorage.createUser(email, passwordHash, name);
 
     // Создаем бесплатную подписку
-    await databaseService.createSubscription({
+    await memoryStorage.createSubscription({
       user_id: user.id,
       plan: 'free',
       status: 'active',
@@ -60,7 +60,7 @@ class AuthService {
 
   async login(email: string, password: string): Promise<AuthResult> {
     // Находим пользователя
-    const user = await databaseService.getUserByEmail(email);
+    const user = await memoryStorage.getUserByEmail(email);
     if (!user) {
       throw new Error('Неверный email или пароль');
     }
@@ -97,12 +97,12 @@ class AuthService {
   }
 
   async getUserProfile(userId: string) {
-    const user = await databaseService.getUserById(userId);
+    const user = await memoryStorage.getUserById(userId);
     if (!user) {
       throw new Error('Пользователь не найден');
     }
 
-    const subscription = await databaseService.getUserSubscription(userId);
+    const subscription = await memoryStorage.getUserSubscription(userId);
 
     return {
       id: user.id,

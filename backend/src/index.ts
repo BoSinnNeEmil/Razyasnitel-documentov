@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import documentRoutes from './routes/document.routes';
 import authRoutes from './routes/auth.routes';
-import databaseService from './services/database.service';
+import memoryStorage from './services/memory-storage.service';
 
 dotenv.config();
 
@@ -25,11 +25,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/health', async (req, res) => {
-  const dbHealth = await databaseService.healthCheck();
+  const dbHealth = await memoryStorage.healthCheck();
+  const stats = memoryStorage.getStats();
+  
   res.json({ 
     status: 'ok', 
     message: 'Document Explainer API is running',
+    storage: 'memory',
     database: dbHealth ? 'connected' : 'disconnected',
+    stats,
     timestamp: new Date().toISOString()
   });
 });
@@ -39,6 +43,7 @@ app.get('/api', (req, res) => {
   res.json({ 
     message: 'Document Explainer API',
     version: '0.1.0',
+    storage: 'memory (development)',
     endpoints: {
       auth: {
         register: 'POST /api/auth/register',
@@ -67,5 +72,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📁 Uploads directory: ${uploadsDir}`);
-  console.log(`🗄️  Database: ${process.env.SUPABASE_URL ? 'Supabase' : 'Not configured'}`);
+  console.log(`💾 Storage: Memory (development mode)`);
+  console.log(`🤖 AI: ${process.env.HF_TOKEN ? 'HuggingFace configured' : 'Not configured'}`);
 });
