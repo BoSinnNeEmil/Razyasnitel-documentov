@@ -7,7 +7,7 @@ class AIService {
   constructor() {
     this.client = new OpenAI({
       baseURL: process.env.AI_BASE_URL || 'https://router.huggingface.co/v1',
-      apiKey: process.env.HF_TOKEN,
+      apiKey: process.env.HF_TOKEN || 'dummy-key',
     });
     this.model = process.env.AI_MODEL || 'openai/gpt-oss-120b:groq';
   }
@@ -136,4 +136,5 @@ ${text.substring(0, 8000)} ${text.length > 8000 ? '...' : ''}
   }
 }
 
+export { AIService };
 export default new AIService();
