@@ -8,9 +8,9 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Allow guest uploads (no authentication required)
+    const userId = session?.user?.id || 'guest';
+    const isGuest = !session?.user?.id;
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -37,15 +37,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
     }
 
-    // Check user's document limit
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('documents_count, documents_limit')
-      .eq('id', session.user.id)
-      .single();
+    // Check user's document limit (skip for guests)
+    if (!isGuest) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('documents_count, documents_limit')
+        .eq('id', userId)
+        .single();
 
-    if (profile && profile.documents_count >= profile.documents_limit) {
-      return NextResponse.json({ error: 'Document limit reached' }, { status: 403 });
+      if (profile && profile.documents_count >= profile.documents_limit) {
+        return NextResponse.json({ error: 'Document limit reached' }, { status: 403 });
+      }
     }
 
     // Parse document to get page count
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload file to Supabase Storage
-    const fileName = `${session.user.id}/${Date.now()}-${file.name}`;
+    const fileName = `${userId}/${Date.now()}-${file.name}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('documents')
       .upload(fileName, file);
@@ -72,11 +74,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }
 
-    // Create document record
+    // Create document record (for guests, skip database insert)
+    if (isGuest) {
+      // For guests, return minimal data without saving to database
+      return NextResponse.json({ 
+        document: {
+          id: 'guest-' + Date.now(),
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          original_filename: file.name,
+          file_path: uploadData.path,
+          file_size: file.size,
+          file_type: file.type,
+          page_count: pageCount,
+          status: 'processing',
+          user_id: 'guest',
+        }
+      });
+    }
+
+    // For authenticated users, save to database
     const { data: document, error: dbError } = await supabase
       .from('documents')
       .insert({
-        user_id: session.user.id,
+        user_id: userId,
         title: file.name.replace(/\.[^/.]+$/, ''),
         original_filename: file.name,
         file_path: uploadData.path,
@@ -94,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update documents count
-    await supabase.rpc('increment_documents_count', { user_id: session.user.id });
+    await supabase.rpc('increment_documents_count', { user_id: userId });
 
     return NextResponse.json({ document });
   } catch (error) {

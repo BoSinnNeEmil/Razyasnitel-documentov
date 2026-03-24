@@ -17,11 +17,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    }
-  }, [status, router]);
+  // Removed authentication redirect - allow guest access
 
   const { data: documents, refetch } = useQuery({
     queryKey: ['documents'],
@@ -92,9 +88,7 @@ export default function DashboardPage() {
     return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
   }
 
-  if (!session) {
-    return null;
-  }
+  const isGuest = !session;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -115,12 +109,25 @@ export default function DashboardPage() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Разъяснитель документов</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              {profile?.documents_count || 0} / {profile?.documents_limit || 3} документов
-            </span>
-            <Button variant="outline" onClick={() => router.push('/settings')}>
-              Настройки
-            </Button>
+            {!isGuest ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {profile?.documents_count || 0} / {profile?.documents_limit || 3} документов
+                </span>
+                <Button variant="outline" onClick={() => router.push('/settings')}>
+                  Настройки
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  Гостевой режим
+                </span>
+                <Link href="/auth/signin">
+                  <Button variant="outline">Войти</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -141,47 +148,49 @@ export default function DashboardPage() {
           </Card>
 
           {/* Recent Documents */}
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Последние документы</h2>
-            {documents && documents.length > 0 ? (
-              <div className="grid gap-4">
-                {documents.map((doc) => (
-                  <Link key={doc.id} href={`/documents/${doc.id}`}>
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <FileText className="w-6 h-6 text-primary" />
+          {!isGuest && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Последние документы</h2>
+              {documents && documents.length > 0 ? (
+                <div className="grid gap-4">
+                  {documents.map((doc) => (
+                    <Link key={doc.id} href={`/documents/${doc.id}`}>
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-4 flex-1">
+                              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-6 h-6 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold mb-1 truncate">{doc.title}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {doc.original_filename} • {formatDate(doc.created_at)}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold mb-1 truncate">{doc.title}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {doc.original_filename} • {formatDate(doc.created_at)}
-                              </p>
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(doc.status)}
+                              <span className="text-sm capitalize">{doc.status}</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(doc.status)}
-                            <span className="text-sm capitalize">{doc.status}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    У вас пока нет документов. Загрузите первый документ для анализа.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      У вас пока нет документов. Загрузите первый документ для анализа.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

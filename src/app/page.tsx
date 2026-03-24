@@ -15,7 +15,7 @@ export default function HomePage() {
           Договоры, медицинские заключения, технические документы — всё становится понятным.
         </p>
         <div className="flex gap-4 justify-center">
-          <Link href="/auth/signup">
+          <Link href="/dashboard">
             <Button size="lg">Попробовать бесплатно</Button>
           </Link>
           <Link href="/auth/signin">

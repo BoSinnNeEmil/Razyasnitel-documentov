@@ -15,18 +15,27 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Allow guest analysis
+    const isGuest = params.id.startsWith('guest-');
 
     const { style = 'friendly' } = await request.json();
 
-    // Get document
+    // For guests, we need to handle differently (no database lookup)
+    if (isGuest) {
+      // Guest mode: file path should be passed in request or stored temporarily
+      // For now, return error asking to register
+      return NextResponse.json({ 
+        error: 'Для анализа документов необходимо зарегистрироваться',
+        requiresAuth: true 
+      }, { status: 401 });
+    }
+
+    // Get document for authenticated users
     const { data: document, error: docError } = await supabase
       .from('documents')
       .select('*')
       .eq('id', params.id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', session?.user?.id)
       .single();
 
     if (docError || !document) {
