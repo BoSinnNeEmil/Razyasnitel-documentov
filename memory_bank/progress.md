@@ -1,7 +1,7 @@
 # Progress
 
 ## Контроль изменений
-**last_checked_commit:** недоступен: текущая директория не является git-репозиторием на 2026-04-28
+**last_checked_commit:** c62806d (chore: configure bun and remove build artifacts)
 
 ## Что готово
 
@@ -42,10 +42,11 @@
 3. Длинные документы (>10000 символов) обрезаются для AI
 4. Нет кэширования результатов анализа
 5. Нет обработки ошибок AI API
-6. Текущая директория не является git-репозиторием, поэтому контроль коммитов недоступен
+6. Push в GitHub заблокирован сохраненными credentials пользователя `Skitalec514`; нужен доступ к `BoSinnNeEmil/Razyasnitel-documentov`
 
 ## Changelog
 - **2026-03-27:** Создана структура Memory Bank, сформированы deliverables
 - **2026-04-28:** Добавлена проектная конфигурация `opencode.json` для подключения Supabase MCP
 - **2026-04-28:** Supabase MCP успешно авторизован, Google OAuth сделан опциональным, добавлен шаблон `.env.local`
 - **2026-04-28:** Добавлен Biome, bun lockfile и скрипты проверки; исправлены lint/type ошибки; `bun run lint`, `bunx tsc --noEmit` и `bun run build` проходят без запуска dev-сервера
+- **2026-04-28:** Git синхронизация восстановлена, `origin` настроен на `BoSinnNeEmil/Razyasnitel-documentov`, `.next` и `.kiro` сняты с индекса; локальный коммит `c62806d` создан, push заблокирован GitHub 403 из-за credentials `Skitalec514`
