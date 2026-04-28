@@ -1,7 +1,7 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'
+import { useState } from 'react'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -9,26 +9,26 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    });
-  };
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Пароли не совпадают');
-      setLoading(false);
-      return;
+      setError('Пароли не совпадают')
+      setLoading(false)
+      return
     }
 
     try {
@@ -42,26 +42,26 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Ошибка при регистрации');
+        throw new Error(data.error || 'Ошибка при регистрации')
       }
 
       // Сохраняем токен
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
+      localStorage.setItem('token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
 
       // Перенаправляем на главную
-      window.location.href = '/dashboard';
+      window.location.href = '/dashboard'
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -158,5 +158,5 @@ export default function RegisterPage() {
         </form>
       </div>
     </div>
-  );
+  )
 }

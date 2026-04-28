@@ -26,10 +26,12 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 NEXTAUTH_URL
 NEXTAUTH_SECRET
-GOOGLE_CLIENT_ID
-GOOGLE_CLIENT_SECRET
+GOOGLE_CLIENT_ID (optional)
+GOOGLE_CLIENT_SECRET (optional)
 OPENAI_API_KEY
 ```
+
+`.env.local` может содержать валидные URL-заглушки для прохождения build, но для runtime нужны реальные Supabase/OpenAI значения.
 
 ### Ограничения
 - Максимальный размер файла: 10 МБ (Free), 50 МБ (Pro)
@@ -42,6 +44,10 @@ OPENAI_API_KEY
 
 ## Пакетный менеджер
 - bun (согласно AGENTS.md)
+- Lockfile: `bun.lock`
 
 ## Линтинг
-- Biome (для TypeScript/JavaScript файлов)
+- Biome (для TypeScript/JavaScript/JSON/CSS файлов, Markdown исключен)
+- Скрипты: `bun run lint`, `bun run lint:fix`, `bun run format`
+- Проверка типов: `bunx tsc --noEmit`
+- Production build: `bun run build`

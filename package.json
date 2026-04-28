@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -38,6 +40,7 @@
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
+    "@biomejs/biome": "^1.9.4",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.1.0",
@@ -46,13 +49,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.3.3"
   },
-  "keywords": [
-    "ai",
-    "document-analysis",
-    "nextjs",
-    "supabase",
-    "openai"
-  ],
+  "keywords": ["ai", "document-analysis", "nextjs", "supabase", "openai"],
   "author": "Product Team",
   "license": "UNLICENSED"
 }

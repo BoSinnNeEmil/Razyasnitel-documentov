@@ -1,29 +1,34 @@
-'use client';
+'use client'
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Download, MessageSquare, AlertTriangle, CheckSquare } from 'lucide-react';
-import Link from 'next/link';
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { supabase } from '@/lib/supabase'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { AlertTriangle, ArrowLeft, CheckSquare, Download, MessageSquare } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+type ExplanationStyle = 'formal' | 'friendly' | 'expert'
+
+const getStableKey = (value: unknown, index: number) =>
+  typeof value === 'string' ? value : `${JSON.stringify(value)}-${index}`
 
 export default function DocumentPage({ params }: { params: { id: string } }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [analyzing, setAnalyzing] = useState(false);
-  const [question, setQuestion] = useState('');
-  const [style, setStyle] = useState<'formal' | 'friendly' | 'expert'>('friendly');
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [analyzing, setAnalyzing] = useState(false)
+  const [question, setQuestion] = useState('')
+  const [style, setStyle] = useState<ExplanationStyle>('friendly')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+      router.push('/auth/signin')
     }
-  }, [status, router]);
+  }, [status, router])
 
   const { data: document, refetch: refetchDocument } = useQuery({
     queryKey: ['document', params.id],
@@ -32,13 +37,13 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
         .from('documents')
         .select('*')
         .eq('id', params.id)
-        .single();
+        .single()
 
-      if (error) throw error;
-      return data;
+      if (error) throw error
+      return data
     },
     enabled: !!session,
-  });
+  })
 
   const { data: analysis, refetch: refetchAnalysis } = useQuery({
     queryKey: ['analysis', params.id],
@@ -49,13 +54,13 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
         .eq('document_id', params.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .single()
 
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      if (error && error.code !== 'PGRST116') throw error
+      return data
     },
     enabled: !!session && document?.status === 'completed',
-  });
+  })
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
@@ -63,38 +68,38 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ style }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error('Analysis failed');
+        throw new Error('Analysis failed')
       }
 
-      return response.json();
+      return response.json()
     },
     onSuccess: () => {
-      refetchDocument();
-      refetchAnalysis();
+      refetchDocument()
+      refetchAnalysis()
     },
-  });
+  })
 
   const handleAnalyze = async () => {
-    setAnalyzing(true);
+    setAnalyzing(true)
     try {
-      await analyzeMutation.mutateAsync();
+      await analyzeMutation.mutateAsync()
     } catch (error) {
-      console.error('Analysis error:', error);
-      alert('Ошибка анализа документа');
+      console.error('Analysis error:', error)
+      alert('Ошибка анализа документа')
     } finally {
-      setAnalyzing(false);
+      setAnalyzing(false)
     }
-  };
+  }
 
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>
   }
 
   if (!session || !document) {
-    return null;
+    return null
   }
 
   return (
@@ -130,7 +135,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
                   <div className="flex items-center gap-4">
                     <select
                       value={style}
-                      onChange={(e) => setStyle(e.target.value as any)}
+                      onChange={(e) => setStyle(e.target.value as ExplanationStyle)}
                       className="border rounded-md px-3 py-2"
                     >
                       <option value="friendly">Дружелюбный</option>
@@ -171,7 +176,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
                           <ul className="space-y-2">
                             {Array.isArray(analysis.key_points) ? (
                               analysis.key_points.map((point: string, i: number) => (
-                                <li key={i}>{point}</li>
+                                <li key={getStableKey(point, i)}>{point}</li>
                               ))
                             ) : (
                               <li>{JSON.stringify(analysis.key_points)}</li>
@@ -197,10 +202,15 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
                     <div className="space-y-4">
                       {analysis.risks && Array.isArray(analysis.risks) ? (
                         analysis.risks.map((risk: any, i: number) => (
-                          <div key={i} className="border-l-4 border-destructive pl-4 py-2">
+                          <div
+                            key={getStableKey(risk, i)}
+                            className="border-l-4 border-destructive pl-4 py-2"
+                          >
                             <p className="font-medium">{risk.title || risk}</p>
                             {risk.description && (
-                              <p className="text-sm text-muted-foreground mt-1">{risk.description}</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {risk.description}
+                              </p>
                             )}
                           </div>
                         ))
@@ -222,7 +232,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
                     <div className="space-y-3">
                       {analysis.obligations && Array.isArray(analysis.obligations) ? (
                         analysis.obligations.map((obligation: any, i: number) => (
-                          <div key={i} className="flex items-start gap-3">
+                          <div key={getStableKey(obligation, i)} className="flex items-start gap-3">
                             <CheckSquare className="w-5 h-5 text-primary mt-0.5" />
                             <p>{obligation.title || obligation}</p>
                           </div>
@@ -245,7 +255,10 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
                     <div className="space-y-3">
                       {analysis.checklist && Array.isArray(analysis.checklist) ? (
                         analysis.checklist.map((item: any, i: number) => (
-                          <label key={i} className="flex items-start gap-3 cursor-pointer">
+                          <label
+                            key={getStableKey(item, i)}
+                            className="flex items-start gap-3 cursor-pointer"
+                          >
                             <input type="checkbox" className="mt-1" />
                             <span>{item.title || item}</span>
                           </label>
@@ -288,7 +301,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
           )}
 
           <div className="mt-6 flex gap-4">
-            <Button 
+            <Button
               variant="outline"
               onClick={() => window.open(`/api/documents/${params.id}/export`, '_blank')}
               disabled={!analysis}
@@ -300,5 +313,5 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
         </div>
       </main>
     </div>
-  );
+  )
 }

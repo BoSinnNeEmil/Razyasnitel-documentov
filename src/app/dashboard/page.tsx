@@ -1,21 +1,21 @@
-'use client';
+'use client'
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { UploadZone } from '@/components/upload-zone';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { formatDate } from '@/lib/utils';
-import Link from 'next/link';
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { UploadZone } from '@/components/upload-zone'
+import { supabase } from '@/lib/supabase'
+import { formatDate } from '@/lib/utils'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [uploading, setUploading] = useState(false);
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [uploading, setUploading] = useState(false)
 
   // Removed authentication redirect - allow guest access
 
@@ -26,13 +26,13 @@ export default function DashboardPage() {
         .from('documents')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(10)
 
-      if (error) throw error;
-      return data;
+      if (error) throw error
+      return data
     },
     enabled: !!session,
-  });
+  })
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -41,67 +41,67 @@ export default function DashboardPage() {
         .from('profiles')
         .select('*')
         .eq('id', session?.user?.id)
-        .single();
+        .single()
 
-      if (error) throw error;
-      return data;
+      if (error) throw error
+      return data
     },
     enabled: !!session?.user?.id,
-  });
+  })
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
+      const formData = new FormData()
+      formData.append('file', file)
 
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
-      });
+      })
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
       }
 
-      return response.json();
+      return response.json()
     },
     onSuccess: (data) => {
-      refetch();
-      router.push(`/documents/${data.document.id}`);
+      refetch()
+      router.push(`/documents/${data.document.id}`)
     },
-  });
+  })
 
   const handleUpload = async (file: File) => {
-    setUploading(true);
+    setUploading(true)
     try {
-      await uploadMutation.mutateAsync(file);
+      await uploadMutation.mutateAsync(file)
     } catch (error) {
-      console.error('Upload error:', error);
-      alert('Ошибка загрузки файла');
+      console.error('Upload error:', error)
+      alert('Ошибка загрузки файла')
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
-
-  if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
   }
 
-  const isGuest = !session;
+  if (status === 'loading') {
+    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>
+  }
+
+  const isGuest = !session
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-5 h-5 text-accent" />;
+        return <CheckCircle className="w-5 h-5 text-accent" />
       case 'processing':
-        return <Clock className="w-5 h-5 text-warning animate-spin" />;
+        return <Clock className="w-5 h-5 text-warning animate-spin" />
       case 'failed':
-        return <AlertCircle className="w-5 h-5 text-destructive" />;
+        return <AlertCircle className="w-5 h-5 text-destructive" />
       default:
-        return <FileText className="w-5 h-5" />;
+        return <FileText className="w-5 h-5" />
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,9 +120,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <span className="text-sm text-muted-foreground">
-                  Гостевой режим
-                </span>
+                <span className="text-sm text-muted-foreground">Гостевой режим</span>
                 <Link href="/auth/signin">
                   <Button variant="outline">Войти</Button>
                 </Link>
@@ -194,5 +192,5 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
-  );
+  )
 }

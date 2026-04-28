@@ -1,18 +1,18 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'
+import { useState } from 'react'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
     try {
       const response = await fetch('http://localhost:4000/api/auth/login', {
@@ -21,34 +21,32 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Ошибка при входе');
+        throw new Error(data.error || 'Ошибка при входе')
       }
 
       // Сохраняем токен
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
+      localStorage.setItem('token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
 
       // Перенаправляем на главную
-      window.location.href = '/dashboard';
+      window.location.href = '/dashboard'
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Вход в аккаунт
-          </h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Вход в аккаунт</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Или{' '}
             <Link href="/auth/register" className="font-medium text-primary hover:text-blue-500">
@@ -108,5 +106,5 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
-  );
+  )
 }

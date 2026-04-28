@@ -1,26 +1,24 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-  }, []);
+    const token = localStorage.getItem('token')
+    setIsLoggedIn(!!token)
+  }, [])
 
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center">
-            <h1 className="text-xl font-bold text-primary">
-              Разъяснитель документов
-            </h1>
+            <h1 className="text-xl font-bold text-primary">Разъяснитель документов</h1>
           </Link>
-          
+
           <nav className="flex items-center space-x-4">
             {isLoggedIn ? (
               <>
@@ -57,5 +55,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  );
+  )
 }

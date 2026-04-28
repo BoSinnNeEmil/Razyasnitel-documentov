@@ -1,25 +1,25 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { FileText, Zap, Shield, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button'
+import { FileText, Shield, Users, Zap } from 'lucide-react'
+import Link from 'next/link'
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-5xl font-bold mb-6">
-          Понимайте любой документ за 2 минуты
-        </h1>
+        <h1 className="text-5xl font-bold mb-6">Понимайте любой документ за 2 минуты</h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          AI-powered платформа для анализа и упрощения сложных документов. 
-          Договоры, медицинские заключения, технические документы — всё становится понятным.
+          AI-powered платформа для анализа и упрощения сложных документов. Договоры, медицинские
+          заключения, технические документы — всё становится понятным.
         </p>
         <div className="flex gap-4 justify-center">
           <Link href="/dashboard">
             <Button size="lg">Попробовать бесплатно</Button>
           </Link>
           <Link href="/auth/signin">
-            <Button size="lg" variant="outline">Войти</Button>
+            <Button size="lg" variant="outline">
+              Войти
+            </Button>
           </Link>
         </div>
       </section>
@@ -32,9 +32,7 @@ export default function HomePage() {
               <FileText className="w-8 h-8 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Простой язык</h3>
-            <p className="text-muted-foreground">
-              Переводим сложные термины на понятный язык
-            </p>
+            <p className="text-muted-foreground">Переводим сложные термины на понятный язык</p>
           </div>
 
           <div className="text-center">
@@ -42,9 +40,7 @@ export default function HomePage() {
               <Zap className="w-8 h-8 text-accent" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Быстрый анализ</h3>
-            <p className="text-muted-foreground">
-              Результаты за 30 секунд вместо часов чтения
-            </p>
+            <p className="text-muted-foreground">Результаты за 30 секунд вместо часов чтения</p>
           </div>
 
           <div className="text-center">
@@ -52,9 +48,7 @@ export default function HomePage() {
               <Shield className="w-8 h-8 text-destructive" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Выявление рисков</h3>
-            <p className="text-muted-foreground">
-              Находим скрытые риски и обязательства
-            </p>
+            <p className="text-muted-foreground">Находим скрытые риски и обязательства</p>
           </div>
 
           <div className="text-center">
@@ -62,9 +56,7 @@ export default function HomePage() {
               <Users className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-semibold mb-2">Командная работа</h3>
-            <p className="text-muted-foreground">
-              Совместный анализ документов с коллегами
-            </p>
+            <p className="text-muted-foreground">Совместный анализ документов с коллегами</p>
           </div>
         </div>
       </section>
@@ -82,7 +74,9 @@ export default function HomePage() {
               <li>✓ Базовый анализ</li>
             </ul>
             <Link href="/auth/signup">
-              <Button variant="outline" className="w-full">Начать</Button>
+              <Button variant="outline" className="w-full">
+                Начать
+              </Button>
             </Link>
           </div>
 
@@ -91,7 +85,9 @@ export default function HomePage() {
               Популярный
             </div>
             <h3 className="text-2xl font-bold mb-2">Basic</h3>
-            <p className="text-3xl font-bold mb-4">299₽<span className="text-sm">/мес</span></p>
+            <p className="text-3xl font-bold mb-4">
+              299₽<span className="text-sm">/мес</span>
+            </p>
             <ul className="space-y-2 mb-6">
               <li>✓ 20 документов/месяц</li>
               <li>✓ До 50 страниц</li>
@@ -105,7 +101,9 @@ export default function HomePage() {
 
           <div className="border rounded-lg p-6">
             <h3 className="text-2xl font-bold mb-2">Pro</h3>
-            <p className="text-3xl font-bold mb-4">799₽<span className="text-sm">/мес</span></p>
+            <p className="text-3xl font-bold mb-4">
+              799₽<span className="text-sm">/мес</span>
+            </p>
             <ul className="space-y-2 mb-6">
               <li>✓ Безлимитные документы</li>
               <li>✓ Без ограничений</li>
@@ -113,11 +111,13 @@ export default function HomePage() {
               <li>✓ API доступ</li>
             </ul>
             <Link href="/auth/signup">
-              <Button variant="outline" className="w-full">Выбрать</Button>
+              <Button variant="outline" className="w-full">
+                Выбрать
+              </Button>
             </Link>
           </div>
         </div>
       </section>
     </div>
-  );
+  )
 }

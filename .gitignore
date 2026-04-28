@@ -41,6 +41,7 @@ frontend/.env.production.local
 next-env.d.ts
 
 # IDE
+.kiro/
 .vscode/
 .idea/
 *.swp

@@ -1,26 +1,26 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { supabase } from '@/lib/supabase'
+import { signIn } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function SignUpPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
     const { error: signUpError } = await supabase.auth.signUp({
       email,
@@ -30,12 +30,12 @@ export default function SignUpPage() {
           full_name: fullName,
         },
       },
-    });
+    })
 
     if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-      return;
+      setError(signUpError.message)
+      setLoading(false)
+      return
     }
 
     // Auto sign in after registration
@@ -43,19 +43,19 @@ export default function SignUpPage() {
       email,
       password,
       redirect: false,
-    });
+    })
 
     if (result?.error) {
-      setError('Регистрация успешна, но не удалось войти');
-      setLoading(false);
+      setError('Регистрация успешна, но не удалось войти')
+      setLoading(false)
     } else {
-      router.push('/dashboard');
+      router.push('/dashboard')
     }
-  };
+  }
 
   const handleGoogleSignUp = () => {
-    signIn('google', { callbackUrl: '/dashboard' });
-  };
+    signIn('google', { callbackUrl: '/dashboard' })
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -109,12 +109,7 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignUp}
-          >
+          <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignUp}>
             Регистрация через Google
           </Button>
 
@@ -127,5 +122,5 @@ export default function SignUpPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

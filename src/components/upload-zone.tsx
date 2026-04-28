@@ -1,24 +1,24 @@
-'use client';
+'use client'
 
-import { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, X } from 'lucide-react';
-import { Button } from './ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
+import { FileText, Upload, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { Button } from './ui/button'
 
 interface UploadZoneProps {
-  onUpload: (file: File) => void;
-  loading?: boolean;
+  onUpload: (file: File) => void
+  loading?: boolean
 }
 
 export function UploadZone({ onUpload, loading }: UploadZoneProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
+      setSelectedFile(acceptedFiles[0])
     }
-  }, []);
+  }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -29,17 +29,17 @@ export function UploadZone({ onUpload, loading }: UploadZoneProps) {
     },
     maxSize: 10 * 1024 * 1024, // 10MB
     multiple: false,
-  });
+  })
 
   const handleUpload = () => {
     if (selectedFile) {
-      onUpload(selectedFile);
+      onUpload(selectedFile)
     }
-  };
+  }
 
   const handleRemove = () => {
-    setSelectedFile(null);
-  };
+    setSelectedFile(null)
+  }
 
   return (
     <div className="w-full">
@@ -56,12 +56,8 @@ export function UploadZone({ onUpload, loading }: UploadZoneProps) {
           <p className="text-lg font-medium mb-2">
             {isDragActive ? 'Отпустите файл здесь' : 'Перетащите файл сюда'}
           </p>
-          <p className="text-sm text-muted-foreground mb-4">
-            или нажмите для выбора файла
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Поддерживаются: PDF, DOCX, TXT (до 10 МБ)
-          </p>
+          <p className="text-sm text-muted-foreground mb-4">или нажмите для выбора файла</p>
+          <p className="text-xs text-muted-foreground">Поддерживаются: PDF, DOCX, TXT (до 10 МБ)</p>
         </div>
       ) : (
         <div className="border rounded-lg p-6">
@@ -77,24 +73,15 @@ export function UploadZone({ onUpload, loading }: UploadZoneProps) {
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRemove}
-              disabled={loading}
-            >
+            <Button variant="ghost" size="icon" onClick={handleRemove} disabled={loading}>
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <Button
-            onClick={handleUpload}
-            disabled={loading}
-            className="w-full"
-          >
+          <Button onClick={handleUpload} disabled={loading} className="w-full">
             {loading ? 'Загрузка...' : 'Загрузить и анализировать'}
           </Button>
         </div>
       )}
     </div>
-  );
+  )
 }
