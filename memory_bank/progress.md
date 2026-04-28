@@ -1,7 +1,7 @@
 # Progress
 
 ## Контроль изменений
-**last_checked_commit:** 310a2e8 (feat: Initialize Memory Bank system with deliverables)
+**last_checked_commit:** 1b23606 (docs: Update progress.md with new last_checked_commit)
 
 ## Что готово
 
@@ -33,6 +33,7 @@
 - Настройка Supabase проекта
 - Тестирование всех функций
 - Оптимизация производительности
+- Заполнение локальных переменных окружения для приложения
 
 ## Известные проблемы
 1. Нужно настроить Supabase для работы приложения
@@ -43,3 +44,5 @@
 
 ## Changelog
 - **2026-03-27:** Создана структура Memory Bank, сформированы deliverables
+- **2026-04-28:** Добавлена проектная конфигурация `opencode.json` для подключения Supabase MCP
+- **2026-04-28:** Supabase MCP успешно авторизован, Google OAuth сделан опциональным, добавлен шаблон `.env.local`
