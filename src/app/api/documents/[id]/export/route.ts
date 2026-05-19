@@ -1,5 +1,5 @@
+import { getAnalysis, getDocument } from '@/lib/appwrite'
 import { authOptions } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
 import { jsPDF } from 'jspdf'
 import { getServerSession } from 'next-auth'
 import { type NextRequest, NextResponse } from 'next/server'
@@ -12,59 +12,57 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get document
-    const { data: document, error: docError } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('id', params.id)
-      .eq('user_id', session.user.id)
-      .single()
-
-    if (docError || !document) {
+    let document: unknown = null
+    try {
+      document = await getDocument(params.id)
+    } catch {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    // Get analysis
-    const { data: analysis, error: analysisError } = await supabase
-      .from('analyses')
-      .select('*')
-      .eq('document_id', params.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    const doc = document as { user_id: string; title: string; original_filename: string }
+    if (!doc || doc.user_id !== session.user.id) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    }
 
-    if (analysisError || !analysis) {
+    let analysis: unknown = null
+    try {
+      analysis = await getAnalysis(params.id)
+    } catch {
       return NextResponse.json({ error: 'Analysis not found' }, { status: 404 })
     }
 
-    // Create PDF
-    const doc = new jsPDF()
+    if (!analysis) {
+      return NextResponse.json({ error: 'Analysis not found' }, { status: 404 })
+    }
+
+    const pdf = new jsPDF()
     let yPosition = 20
 
-    // Title
-    doc.setFontSize(20)
-    doc.text(document.title, 20, yPosition)
+    pdf.setFontSize(20)
+    pdf.text(doc.title, 20, yPosition)
     yPosition += 15
 
-    // Document info
-    doc.setFontSize(10)
-    doc.text(`Файл: ${document.original_filename}`, 20, yPosition)
+    pdf.setFontSize(10)
+    pdf.text(`Файл: ${doc.original_filename}`, 20, yPosition)
     yPosition += 7
-    doc.text(
-      `Дата анализа: ${new Date(analysis.created_at).toLocaleDateString('ru-RU')}`,
-      20,
-      yPosition
-    )
+    const analysisData = analysis as {
+      summary?: string
+      key_points?: unknown[]
+      risks?: unknown[]
+      obligations?: unknown[]
+      checklist?: unknown[]
+    }
+    pdf.text(`Дата анализа: ${new Date().toLocaleDateString('ru-RU')}`, 20, yPosition)
     yPosition += 15
 
     // Summary
-    doc.setFontSize(16)
-    doc.text('Краткое резюме', 20, yPosition)
+    pdf.setFontSize(16)
+    pdf.text('Краткое резюме', 20, yPosition)
     yPosition += 10
 
-    doc.setFontSize(11)
+    pdf.setFontSize(11)
     const summaryLines = doc.splitTextToSize(analysis.summary || 'Нет резюме', 170)
-    doc.text(summaryLines, 20, yPosition)
+    pdf.text(summaryLines, 20, yPosition)
     yPosition += summaryLines.length * 7 + 10
 
     // Key points
@@ -78,18 +76,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         yPosition = 20
       }
 
-      doc.setFontSize(16)
-      doc.text('Ключевые пункты', 20, yPosition)
+      pdf.setFontSize(16)
+      pdf.text('Ключевые пункты', 20, yPosition)
       yPosition += 10
 
-      doc.setFontSize(11)
+      pdf.setFontSize(11)
       analysis.key_points.forEach((point: string, index: number) => {
         if (yPosition > 270) {
           doc.addPage()
           yPosition = 20
         }
         const pointLines = doc.splitTextToSize(`${index + 1}. ${point}`, 165)
-        doc.text(pointLines, 25, yPosition)
+        pdf.text(pointLines, 25, yPosition)
         yPosition += pointLines.length * 7 + 3
       })
       yPosition += 7
@@ -102,13 +100,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         yPosition = 20
       }
 
-      doc.setFontSize(16)
+      pdf.setFontSize(16)
       doc.setTextColor(239, 68, 68) // Red
-      doc.text('Риски', 20, yPosition)
+      pdf.text('Риски', 20, yPosition)
       doc.setTextColor(0, 0, 0) // Reset to black
       yPosition += 10
 
-      doc.setFontSize(11)
+      pdf.setFontSize(11)
       analysis.risks.forEach((risk: any, index: number) => {
         if (yPosition > 270) {
           doc.addPage()
@@ -116,7 +114,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
         const riskText = typeof risk === 'string' ? risk : risk.title || JSON.stringify(risk)
         const riskLines = doc.splitTextToSize(`${index + 1}. ${riskText}`, 165)
-        doc.text(riskLines, 25, yPosition)
+        pdf.text(riskLines, 25, yPosition)
         yPosition += riskLines.length * 7 + 3
       })
       yPosition += 7
@@ -133,11 +131,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         yPosition = 20
       }
 
-      doc.setFontSize(16)
-      doc.text('Обязательства', 20, yPosition)
+      pdf.setFontSize(16)
+      pdf.text('Обязательства', 20, yPosition)
       yPosition += 10
 
-      doc.setFontSize(11)
+      pdf.setFontSize(11)
       analysis.obligations.forEach((obligation: any, index: number) => {
         if (yPosition > 270) {
           doc.addPage()
@@ -148,7 +146,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             ? obligation
             : obligation.title || JSON.stringify(obligation)
         const obligationLines = doc.splitTextToSize(`${index + 1}. ${obligationText}`, 165)
-        doc.text(obligationLines, 25, yPosition)
+        pdf.text(obligationLines, 25, yPosition)
         yPosition += obligationLines.length * 7 + 3
       })
       yPosition += 7
@@ -161,11 +159,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         yPosition = 20
       }
 
-      doc.setFontSize(16)
-      doc.text('Чек-лист действий', 20, yPosition)
+      pdf.setFontSize(16)
+      pdf.text('Чек-лист действий', 20, yPosition)
       yPosition += 10
 
-      doc.setFontSize(11)
+      pdf.setFontSize(11)
       analysis.checklist.forEach((item: any, index: number) => {
         if (yPosition > 270) {
           doc.addPage()
@@ -173,7 +171,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
         const itemText = typeof item === 'string' ? item : item.title || JSON.stringify(item)
         const itemLines = doc.splitTextToSize(`☐ ${itemText}`, 165)
-        doc.text(itemLines, 25, yPosition)
+        pdf.text(itemLines, 25, yPosition)
         yPosition += itemLines.length * 7 + 3
       })
     }

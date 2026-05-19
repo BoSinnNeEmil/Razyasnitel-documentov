@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import { supabase } from './supabase'
+import { account, getOrCreateProfile } from './appwrite'
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
@@ -18,24 +18,30 @@ const providers: NextAuthOptions['providers'] = [
         return null
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password,
-      })
+      try {
+        const session = await account.createEmailSession(credentials.email, credentials.password)
 
-      if (error || !data.user) {
+        const user = await account.get()
+
+        if (!user.email) {
+          return null
+        }
+
+        try {
+          await getOrCreateProfile(user.$id, user.email)
+        } catch {
+          // Profile might already exist
+        }
+
+        return {
+          id: user.$id,
+          email: user.email,
+          name: user.name,
+          image: null,
+        }
+      } catch (error) {
+        console.error('Auth error:', error)
         return null
-      }
-
-      if (!data.user.email) {
-        return null
-      }
-
-      return {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.user_metadata?.full_name,
-        image: data.user.user_metadata?.avatar_url,
       }
     },
   }),
@@ -53,34 +59,12 @@ if (googleClientId && googleClientSecret) {
 export const authOptions: NextAuthOptions = {
   providers,
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === 'google') {
-        if (!user.email) {
-          return false
-        }
-
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', user.email)
-          .single()
-
-        if (!existingUser) {
-          const { error } = await supabase.auth.signUp({
-            email: user.email,
-            password: Math.random().toString(36).slice(-8),
-            options: {
-              data: {
-                full_name: user.name,
-                avatar_url: user.image,
-              },
-            },
-          })
-
-          if (error) {
-            console.error('Error creating user:', error)
-            return false
-          }
+    async signIn({ user }) {
+      if (user?.email) {
+        try {
+          await getOrCreateProfile(user.id, user.email)
+        } catch {
+          // Profile might already exist
         }
       }
       return true

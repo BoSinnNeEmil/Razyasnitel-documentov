@@ -1,6 +1,6 @@
+import { createAnalysis, getDocument, getFileDownload, updateDocument } from '@/lib/appwrite'
 import { authOptions } from '@/lib/auth'
 import { parseDocument, truncateText } from '@/lib/document-parser'
-import { supabase } from '@/lib/supabase'
 import { getServerSession } from 'next-auth'
 import { type NextRequest, NextResponse } from 'next/server'
 
@@ -19,59 +19,46 @@ type AnalysisResult = {
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-
-    // Allow guest analysis
     const isGuest = params.id.startsWith('guest-')
-
     const { style = 'friendly' } = await request.json()
 
-    // For guests, we need to handle differently (no database lookup)
     if (isGuest) {
-      // Guest mode: file path should be passed in request or stored temporarily
-      // For now, return error asking to register
       return NextResponse.json(
-        {
-          error: 'Для анализа документов необходимо зарегистрироваться',
-          requiresAuth: true,
-        },
+        { error: 'Для анализа документов необходимо зарегистрироваться', requiresAuth: true },
         { status: 401 }
       )
     }
 
-    // Get document for authenticated users
-    const { data: document, error: docError } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('id', params.id)
-      .eq('user_id', session?.user?.id)
-      .single()
-
-    if (docError || !document) {
+    let document: unknown = null
+    try {
+      document = await getDocument(params.id)
+    } catch {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    // Download file from Supabase Storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('documents')
-      .download(document.file_path)
+    const doc = document as { user_id: string; file_path: string; file_type: string }
+    if (!doc || doc.user_id !== session?.user?.id) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    }
 
-    if (downloadError) {
+    let fileData: Response | null = null
+    try {
+      fileData = await getFileDownload(doc.file_path)
+    } catch (downloadError) {
+      console.error('Download error:', downloadError)
       return NextResponse.json({ error: 'Failed to download file' }, { status: 500 })
     }
 
-    // Parse document
     const arrayBuffer = await fileData.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const text = await parseDocument(buffer, document.file_type)
+    const text = await parseDocument(buffer, doc.file_type)
 
     if (!text || text.trim().length === 0) {
       return NextResponse.json({ error: 'Failed to extract text from document' }, { status: 500 })
     }
 
-    // Truncate text for AI processing
     const truncatedText = truncateText(text, 10000)
 
-    // Analyze with AI
     const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -89,15 +76,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 3. Риски (список с объяснениями)
 4. Обязательства (список)
 5. Чек-лист действий
-
 Стиль: ${style === 'formal' ? 'формальный' : style === 'expert' ? 'экспертный' : 'дружелюбный'}
-
 Ответь в формате JSON с полями: summary, key_points (массив строк), risks (массив объектов с title и description), obligations (массив строк), checklist (массив строк).`,
           },
-          {
-            role: 'user',
-            content: truncatedText,
-          },
+          { role: 'user', content: truncatedText },
         ],
         temperature: 0.7,
         max_tokens: 2000,
@@ -117,12 +99,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
     }
 
-    // Try to parse JSON response
     let analysis: AnalysisResult
     try {
       analysis = JSON.parse(content)
-    } catch (e) {
-      // If not JSON, create structured response
+    } catch {
       analysis = {
         summary: content,
         key_points: ['Анализ выполнен'],
@@ -132,10 +112,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
     }
 
-    // Save analysis
-    const { data: analysisData, error: analysisError } = await supabase
-      .from('analyses')
-      .insert({
+    let analysisData: unknown = null
+    try {
+      analysisData = await createAnalysis({
         document_id: params.id,
         summary: analysis.summary,
         key_points: analysis.key_points,
@@ -144,16 +123,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         checklist: analysis.checklist,
         style,
       })
-      .select()
-      .single()
-
-    if (analysisError) {
-      console.error('Database error:', analysisError)
+    } catch (dbError) {
+      console.error('Database error:', dbError)
       return NextResponse.json({ error: 'Failed to save analysis' }, { status: 500 })
     }
 
-    // Update document status
-    await supabase.from('documents').update({ status: 'completed' }).eq('id', params.id)
+    try {
+      await updateDocument(params.id, { status: 'completed' })
+    } catch {}
 
     return NextResponse.json({ analysis: analysisData })
   } catch (error) {
